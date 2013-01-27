@@ -1,0 +1,330 @@
+<!doctype html>
+<html lang="ja">
+	<head>
+		<meta charset="utf-8">
+		<title>OpenFlow 1.3について</title>
+		<meta name="description" content="OpenFlow 1.3について">
+		<meta name="author" content="sugyo">
+
+		<meta name="apple-mobile-web-app-capable" content="yes" />
+		<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+
+		<link rel="stylesheet" href="reveal.js/css/reveal.min.css">
+		<link rel="stylesheet" href="night-jp.css" id="theme">
+
+		<!-- For syntax highlighting -->
+		<link rel="stylesheet" href="reveal.js/lib/css/zenburn.css">
+
+		<!-- If the query includes 'print-pdf', use the PDF print sheet -->
+		<script>
+			document.write( '<link rel="stylesheet" href="reveal.js/css/print/' + ( window.location.search.match( /print-pdf/gi ) ? 'pdf' : 'paper' ) + '.css" type="text/css" media="print">' );
+		</script>
+
+		<!--[if lt IE 9]>
+		<script src="reveal.js/lib/js/html5shiv.js"></script>
+		<![endif]-->
+	</head>
+
+	<body>
+		<div class="reveal">
+			<div class="slide-number"></div>
+			<!-- Any section element inside of this container is displayed as a slide -->
+			<div class="slides">
+				<!--
+					表紙
+					自己紹介
+				-->
+				<section>
+					<section>
+						<h2>OpenFlow 1.3について</h2>
+						<br>
+						<br>
+						<h5>2013年1月26日</h5>
+						<h5>すぎょう</h5>
+						<br>
+						<br>
+						<img width="600" height="60" src="title.png" alt="title">
+					</section>
+					<section>
+						<h2>自己紹介</h2>
+						<ul>
+							<li>省略</li>
+						</ul>
+					</section>
+				</section>
+
+				<!--
+					経緯
+					この資料の目的
+				-->
+				<section> 
+					<section>
+						<h2>1.3への期待</h2>
+						OpenFlow 1.0がいろいろ話題になっている<br>
+						でも、IPv6が使えない、MPLS使いたい。マルチーテーブルが使いたい<br>
+						など、OpenFlow 1.0 ではできなかったことができるらしい
+					</section>
+					<section>
+						<h2>1.0、1.1、1.2と1.3は共存するのか?</h2>
+						スイッチは、Open vswitchのように共存できる。コントローラは、むずかしそう。とりあえず、1.3を動かしてみたい。
+						そのためには、調査、調査…でもちょっと挫折…
+						<br>
+						1.3を考えるとおなかが痛い...
+					</section>
+					<section>
+						<h2>今日の目的</h2>
+						OpenFlow 1.3について調べたところを共有したい<br>
+						教えてほしい<br>
+						次回、だれかお願いします
+					</section>
+				</section>
+				
+				<!--
+					OpenFlow 1.3概要
+				-->
+				<section>
+				<h2>OpenFlow 1.3とは</h2>
+				<ul>
+					<li class="fragment">IPv6対応、コントローラでIPv6のルーティングとかできる</li>
+					<li class="fragment">トンネリング・論理ポートの抽象化、DCやVPNでコントローラが使いやすい</li>
+					<li class="fragment">DC間で用いられるている Provider Backbone Bridging (PBB)対応</li>
+					<li class="fragment">フローごとのQoS、ネットワーク帯域幅の制御が可能</li>
+					<li class="fragment">フロー毎の計測やイベントのフィルタでコントローラが制御しやすい</li>
+				</ul>
+				<br>
+				<br>
+				<p>
+					<small><a href="https://www.opennetworking.org/media/press-releases/476-onf-approves-openflow-130-a-of-config-11-to-enhance-interoperability-a-drive-commercialization">
+					ONF Approves OpenFlow 1.3.0 &amp; OF-Config 1.1 to Enhance Interoperability &amp; Drive Commercializationから</a></small>
+				</p>
+				</section>
+
+				<!--
+					OpenFlow 1.0と1.3の主な違い
+					アーキテクチャ
+					パイプライン
+					Pcket InやFlow mod
+				-->
+				<section>
+					<section>
+						<h2>OpenFlow 1.0と1.3の主な違い</h2>
+						<ol>
+							<li class="fragment">Multiple Tables、Groups に対応 (Multiple Tables、Groupsの設定等が可能)</li>
+							<li class="fragment">拡張された match に対応 (拡張された match 対応に伴い MPLS、IPv6 等の match 設定が設定可能)</li>
+							<li class="fragment">拡張されたパケット書き換えに対応 (拡張されたパケット書き換え対応に伴い、MPLS、IPv6 等のパケットの書き換えが可能)</li>
+							<li class="fragment">Packet In の付加されたコンテキストに対応 (Packet In に新たに追加された cookie や match に対応)</li>
+						</ol>
+					</section>
+					<section>
+						<h2>良く使われるパケットが大きく、手間がかかるようになった</h2>
+						<ol>
+							<li class="fragment">packet in に cookie や ofp_match が付いてくるので packet in パケットが肥大</li>
+							<li class="fragment">flow mod が マッチ+アクションだったのが、マッチ+インストラクション+アクション になったため、肥大</li>
+							<li class="fragment">ケーパビリティが多い</li>
+							<li class="fragment">オプションも多い。ベンダー毎、スイッチ毎に違うのか？</li>
+						</ol>
+					</section>
+					<section>
+						<h2>cookie maskが...</h2>
+						flow_mod の MODIFY/DELETE や、flow_stats_request、
+						aggregate_stats_request に cookie mask が使えます。<br>
+						そのため、trema のように cookie を変換しているものは、課題となっています
+					</section>
+					<section>
+						<h2>アプリケーションが意識しないといけないこと</h2>
+						<ol>
+							<li class="fragment">packet inがデフォルトでは上がってこなくなったため、スイッチ
+							が接続されたら、flow mod が必要。<br>
+							準備ができるまで、packet inが上がってこないのはいいかもしれない</li>
+							<li class="fragment">packet inにcookieが付くので、アプリケーションでflow mod を
+							行うと対応付けができる</li>
+							<li class="fragment">packet inのin_portがmatchに含まれるので検索が必要</li>
+							<li class="fragment">Features replyでポート情報が上がってこないので、別に取りに行く必要がある</li></li>
+						</ol>
+					</section>
+					<section>
+						<h2>いくつかのtypoもきになる</h2>
+						trema-egdeのREADMEをみてね
+					</section>
+				</section>
+				<section>
+					<section>
+						<h2>Packet Inをみてください</h2>
+					</section>
+					<section>
+						<h2>OpenFlow 1.0のPacket In</h2>
+						<pre><code contenteditable>
+struct ofp_packet_in {
+    struct ofp_header header;
+    uint32_t buffer_id;         /* ID assigned by datapath. */
+    uint16_t total_len;         /* Full length of frame. */
+    uint16_t in_port;           /* Port on which frame was received. */
+    uint8_t reason;             /* Reason packet is being sent (one of OFPR_*) */
+    uint8_t pad;
+    uint8_t data[0];            /* Ethernet frame, halfway through 32-bit word,
+                                   so the IP header is 32-bit aligned. The
+                                   amount of data is inferred from the length
+                                   field in the header. Because of padding,
+                                   offsetof(struct ofp_packet_in, data) ==
+                                   sizeof(struct ofp_packet_in) - 2. */
+};
+						</code></pre>
+					</section>
+					<section>
+						<h2>OpenFlow 1.3のPacket In</h2>
+						<pre><code contenteditable>
+struct ofp_packet_in {
+    struct ofp_header header;
+    uint32_t buffer_id;         /* ID assigned by datapath. */
+    uint16_t total_len;         /* Full length of frame. */
+    uint8_t reason;             /* Reason packet is being sent (one of OFPR_*) */
+    uint8_t table_id;           /* ID of the table that was looked up */
+    uint64_t cookie;            /* Cookie of the flow entry that was looked up. */
+    struct ofp_match match;     /* Packet metadata. Variable size. */
+    /* Followed by:
+     *   - Exactly 2 all-zero padding bytes, then
+     *   - An Ethernet frame whose length is inferred from header.length.
+     * The padding bytes preceding the Ethernet frame ensure that the IP
+     * header (if any) following the Ethernet header is 32-bit aligned.
+     */
+    //uint8_t pad[2];           /* Align to 64 bit + 16 bit */
+    //uint8_t data[0];          /* Ethernet frame */
+};
+						</code></pre>
+					</section>
+                </section>
+				<section>
+					<h2>1.0でよくわからないアクション</h2>
+					順番に処理すると書かれている。パケットを変更して送信する。<br>
+					これは、正しいの？<br>
+					open vswitchは、動く。forward (output)の変更を受け付けないのもある？
+					<pre><code class="no-highlight">
+flow-mod
+	action set vlan id #1
+	action forward #1
+	action set vlan id #2
+	action forward #2
+					</code></pre>
+					<br>
+					1.3には、アクションだけでなく、パイプライン、インストラクションがあるのでより難しい
+				</section>
+				<!--
+					パイプラインがいや～ん
+				-->
+				<section>
+					<section>
+						<h2>パイプラインがむずかしい</h2>
+						<img width="600" height="400" src="pipeline.png" alt="pipeline">
+					</section>
+					<section>
+						<h2>インストラクション</h2>
+						いままでは、マッチ→アクションだったのが<br>
+						マッチ→インストラクション→goto table、write_matadata, write
+						<pre><code contenteditable>
+enum ofp_instruction_type {
+	OFPIT_GOTO_TABLE = 1,       /* Setup the next table in the lookup
+								   pipeline */
+	OFPIT_WRITE_METADATA = 2,   /* Setup the metadata field for use later in
+								   pipeline */
+	OFPIT_WRITE_ACTIONS = 3,    /* Write the action(s) onto the datapath action
+								   set */
+	OFPIT_APPLY_ACTIONS = 4,    /* Applies the action(s) immediately */
+	OFPIT_CLEAR_ACTIONS = 5,    /* Clears all actions from the datapath
+								   action set */
+	OFPIT_METER = 6,            /* Apply meter (rate limiter) */
+	OFPIT_EXPERIMENTER = 0xFFFF /* Experimenter instruction */
+};
+						</code></pre>
+					</section>
+					<section>
+						<h2>インストラクション</h2>
+							<ul>
+								<li>Optional Instruction: Apply-Actions action(s): Applies the specific action(s) immediately,
+	without any change to the Action Set. This instruction may be used to modify the packet between
+	two tables or to execute multiple actions of the same type. The actions are specified as an action
+	list (see 5.11).</li>
+								<li>Optional Instruction: Clear-Actions: Clears all the actions in the action set immediately.</li>
+								<li>Required Instruction: Write-Actions action(s): Merges the specified action(s) into the current
+	action set (see 5.10). If an action of the given type exists in the current set, overwrite it, otherwise
+	add it.</li>
+							</ul>
+					</section>
+					<section>
+						<h2>インストラクション つづき</h2>
+							<ul>
+								<li>Optional Instruction: Write-Metadata metadata / mask: Writes the masked metadata value
+	into the metadata field. The mask specifies which bits of the metadata register should be modified
+	(i.e. new metadata = old metadata & ~mask j value & mask).</li>
+								<li>Required Instruction: Goto-Table next-table-id: Indicates the next table in the processing
+	pipeline. The table-id must be greater than the current table-id. The flow entries of the last table
+	of the pipeline can not include this instruction (see 5.1).</li>
+							</ul>
+					</section>
+				</section>
+				<!--
+					おねがい
+					勉強会と情報の共有
+					次回までに
+				-->
+				<section>
+					<h2>おねがい</h2>
+					みんなで、1.3をつかいましょう。1.1や1.2は飛ばしましょう!
+						<ol>
+							<li class="fragment">Helloによるネゴシエーション</li>
+							<li class="fragment">グループ</li>
+							<li class="fragment">メーター</li>
+							<li class="fragment">補助接続(Auxiliary Connections)</li>
+							<li class="fragment">パイプラインとグループとgoto文どこまで組み合わせられる？</li>
+						</ol>
+				</section>
+			</div>
+		</div>
+
+		<script src="reveal.js/lib/js/head.min.js"></script>
+		<script src="reveal.js/js/reveal.min.js"></script>
+		<script>
+			function slide_number( event ) {
+				slideNo = ""
+				if ( event.indexv > 0 ) {
+					slideNo = ( event.indexh + 1 ).toString() + '-' + ( event.indexv + 1 ).toString();
+				}
+				else if ( event.indexh > 0 ) {
+					slideNo = ( event.indexh + 1 ).toString();
+				}
+				document.querySelector( '.slide-number' ).innerHTML = slideNo;
+			}
+			Reveal.addEventListener( 'ready', function( event ) {
+				// event.currentSlide, event.indexh, event.indexv
+				slide_number( event );
+			});
+			// Fires each time a new slide is activated
+			Reveal.addEventListener( 'slidechanged', function( event ) {
+				// event.previousSlide, event.currentSlide, event.indexh, event.indexv
+				slide_number( event );
+			});
+			// Full list of configuration options available here:
+			// https://github.com/hakimel/reveal.js#configuration
+			Reveal.initialize({
+				controls: true,
+				progress: true,
+				history: true,
+				center: true,
+                mouseWheel: true,
+
+				theme: Reveal.getQueryHash().theme, // available themes are in /css/theme
+				transition: Reveal.getQueryHash().transition || 'concave', // default/cube/page/concave/zoom/linear/fade/none
+
+				// Optional libraries used to extend on reveal.js
+				dependencies: [
+					{ src: 'reveal.js/lib/js/classList.js', condition: function() { return !document.body.classList; } },
+					{ src: 'reveal.js/plugin/markdown/showdown.js', condition: function() { return !!document.querySelector( '[data-markdown]' ); } },
+					{ src: 'reveal.js/plugin/markdown/markdown.js', condition: function() { return !!document.querySelector( '[data-markdown]' ); } },
+					{ src: 'reveal.js/plugin/highlight/highlight.js', async: true, callback: function() { hljs.initHighlightingOnLoad(); } },
+					{ src: 'reveal.js/plugin/zoom-js/zoom.js', async: true, condition: function() { return !!document.body.classList; } },
+					{ src: 'reveal.js/plugin/notes/notes.js', async: true, condition: function() { return !!document.body.classList; } }
+					// { src: 'reveal.js/plugin/remotes/remotes.js', async: true, condition: function() { return !!document.body.classList; } }
+				]
+			});
+		</script>
+	</body>
+</html>
