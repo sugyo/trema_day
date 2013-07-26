@@ -1,0 +1,232 @@
+<!doctype html>
+<html lang="ja">
+	<head>
+		<meta charset="utf-8">
+		<title>Virtual Network Platformの紹介</title>
+		<meta name="description" content="Virtual Network Platformの紹介">
+		<meta name="author" content="sugyo">
+
+		<meta name="apple-mobile-web-app-capable" content="yes" />
+		<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+
+		<link rel="stylesheet" href="reveal.js/css/reveal.min.css">
+		<link rel="stylesheet" href="simple-jp.css" id="theme">
+
+		<!-- For syntax highlighting -->
+		<link rel="stylesheet" href="reveal.js/lib/css/zenburn.css">
+
+		<!-- If the query includes 'print-pdf', use the PDF print sheet -->
+		<script>
+			document.write( '<link rel="stylesheet" href="reveal.js/css/print/' + ( window.location.search.match( /print-pdf/gi ) ? 'pdf' : 'paper' ) + '.css" type="text/css" media="print">' );
+		</script>
+
+		<!--[if lt IE 9]>
+		<script src="reveal.js/lib/js/html5shiv.js"></script>
+		<![endif]-->
+	</head>
+
+	<body>
+		<div class="reveal">
+			<div class="slide-number"></div>
+			<!-- Any section element inside of this container is displayed as a slide -->
+			<div class="slides">
+				<section>
+					<h2>Virtual Network Platform の紹介</h2>
+					<br>
+					<br>
+					<br>
+					<h4>2013.7.27 Trema day #3</h4>
+					<h4>すぎょう</h4>
+				</section>
+				<section>
+					<h2>Virtual Network Platform の紹介</h2>
+					<br>
+					今週(7/23)、オーバーレイで仮想ネットワークを作成できるアプリケーションをGitHubで公開<br>
+					<br>
+					Tremaベースのアプリケーション<br>
+					GPL2<br>
+					<br>
+					<a ref="https://github.com/trema/virtual-network-platform">ソース https://github.com/trema/virtual-network-platform</a><br>
+					<a ref="http://trema.github.io/virtual-network-platform/">概要 http://trema.github.io/virtual-network-platform/</a>
+				</section>
+				<section>
+					<h2>仮想ネットワークの作成と管理を行う</h2>
+					<img src="virtual_network_platform/f1.png" alt="f1" align="left">
+					物理ネットワーク上に複数の仮想ネットワークを作成することができる<br>
+					<br>
+					ポートは、Datapath ID、ポート名またはポート番号、VLAN IDで識別
+				</section>
+				<section>
+					<h2>VXLANベース</h2>
+					<img src="virtual_network_platform/f2.png" alt="f1" align="left">
+					複数の仮想ネットワークは、VXLANをベースに作成<br>
+					<br>
+					スイッチには、VMや物理マシン、レガシーなどをつなげることを想定
+				</section>
+				<section><section>
+					<h2>アーキテクチャ</h2>
+					<img src="virtual_network_platform/architecture.png" alt="f1" align="left">
+					READMEに付属しているアーキテクチャ
+				</section>
+				<section>
+					<h2>アーキテクチャ</h2>
+					<img height="250" src="virtual_network_platform/architecture-1.png" alt="f1">
+					<br>
+					Virtual Network Manager は、Backend DBから情報を取り出し、必要に応じてOpenFlow Switch やVXLAN tunnel endpoint の設定を行う<br>
+					<br>
+					Configuration Frontend は、仮想ネットワークの管理のための REST インターフェースを持ち、Backend DBに情報を書き込む
+				</section>
+				<section>
+					<h2>アーキテクチャ</h2>
+					<img height="250" src="virtual_network_platform/architecture-2.png" alt="f1">
+					<br>
+					Virtual Network Agent は、Virtual Network Manager から VXLAN tunnel endpoint の設定要求を受け処理する<br>
+					<br>
+					VXLAN Tunnel End-Point は、VXLAN tunnel endpoint 処理を行う部分<br>
+					<br>
+					OpenFlow Switch は、Open vSwitch (version 1.4.X)。ubuntu 12.04 のパッケージを利用
+				</section></section>
+				<section>
+					<h2>VXLANとOpen vSwitch</h2>
+					<img src="virtual_network_platform/f4.png" alt="f1" align="left">
+					linux kernel 3.7以降のvxlan driverも利用可能
+				</section>
+				<section>
+					<h2>VXLAN部分</h2>
+					<br>
+					<br>
+					VXLAN部分は、hogelanをベースに改造<br>
+					ユーザ空間で動作<br>
+					ユーザ空間で動作するのは、作りやすさを優先したため<br>
+					ネットワークIDをVNIに割り当てている<br>
+					<br>
+					<a ref="https://github.com/upa/hogelan">hogelan https://github.com/upa/hogelan</a>
+				</section>
+				<section>
+					<h2>プロアクティブ型</h2>
+					<img src="virtual_network_platform/f5.png" alt="f1" align="left">
+					設定の要求をきっかけに、設定を行う。リアルタイムではない<br>
+					<br>
+					VXLANの設定が必要かの判断は、コントローラが行う。複数のスイッチにまたがる場合は、VXLANの設定をする
+				</section>
+				<section>
+					<h2>プロアクティブ型</h2>
+					<img height="250" src="virtual_network_platform/f6.png" alt="f1" align="left">
+					<br>
+					<img height="250" src="virtual_network_platform/f7.png" alt="f1" align="left">
+					MACアドレスを登録しない場合は、ブロードキャストと同等の動きとなる<br>
+					<br>
+					MACアドレスを登録すると、ユニキャストはフローにしたがって転送される<br>
+					<br>
+					VXLANの学習とは別、連動していない
+				</section>
+				<section><section>
+					<h2>API</h2>
+					<br>
+					Trema/appsのsliceable_switchとよく似ている<br>
+					<br>
+					<ul>
+					<li>RESTベース</li>
+					<li>JSONフォーマット</li>
+					<li>ネットワーク、ポート、MACアドレスの３つ</li>
+					<li>新規、削除、一覧、詳細</li>
+					<li>"486 Busy Here"に注意</li>
+					</ul>
+					<br><br>
+					<a href="http://trema.github.io/virtual-network-platform/doc/api/api.html">http://trema.github.io/virtual-network-platform/doc/api/api.html</a>
+				</section>
+				<section>
+					<h2>ネットワークの作成、削除</h2>
+					ネットワークの作成<br>
+					<pre><code class="no-highlight">
+curl -v \
+        -H "Accept: application/json" \
+        -H "Content-type: application/json" \
+        -X POST \
+        -d '{ "id": 123, "description": "Virtual network #123" }' \
+        http://192.168.1.254:8081/networks
+					</code></pre>
+					ネットワークの削除<br>
+					<pre><code class="no-highlight">
+curl -v \
+        -H "Content-type: application/json" \
+        -X DELETE \
+        http://192.168.1.254:8081/networks/123
+					</code></pre>
+				</section>
+				<section>
+					<h2>ポートの追加、削除</h2>
+					ポートを指定されたネットワークへ追加<br>
+					<pre><code class="no-highlight">
+curl -v \
+        -H "Content-type: application/json" \
+        -X POST \
+        -d '{ "id": 1, "datapath_id": "1", "name": "veth0-0",
+        "vid": 65535, "description": "veth0-0 on switch #1" }' \
+        http://192.168.1.254:8081/networks/123/ports
+					</code></pre>
+					ネットワークからポートを削除<br>
+					<pre><code class="no-highlight">
+curl -v \
+        -H "Content-type: application/json" \
+        -X DELETE \
+        http://192.168.1.254:8081/networks/123/ports/1
+					</code></pre>
+				</section>
+				<section>
+					<h2>MACアドレスの追加、削除</h2>
+					MACアドレスを指定されたポートに追加<br>
+					<pre><code class="no-highlight">
+curl -v \
+        -H "Content-type: application/json" \
+        -X POST \
+        -d '{ "id": 1, "datapath_id": "1", "name": "veth0-0",
+        "vid": 65535, "description": "veth0-0 on switch #1" }' \
+        http://192.168.1.254:8081/networks/123/ports
+					</code></pre>
+					ポートからMACアドレスを削除<br>
+					<pre><code class="no-highlight">
+curl -v \
+        -H "Content-type: application/json" \
+        -X DELETE \
+        http://192.168.1.254:8081/networks/123/ports/1
+					</code></pre>
+				</section></section>
+				<section>
+					<h2>今後の予定</h2>
+					<br>
+					<br>
+					決まっていない
+				</section>
+			</div>
+		</div>
+
+		<script src="reveal.js/lib/js/head.min.js"></script>
+		<script src="reveal.js/js/reveal.min.js"></script>
+		<script>
+			// Full list of configuration options available here:
+			// https://github.com/hakimel/reveal.js#configuration
+			Reveal.initialize({
+				controls: true,
+				progress: true,
+				history: true,
+				center: true,
+                mouseWheel: true,
+
+				theme: Reveal.getQueryHash().theme, // available themes are in /css/theme
+				transition: Reveal.getQueryHash().transition || 'fade', // default/cube/page/concave/zoom/linear/fade/none
+
+				// Optional libraries used to extend on reveal.js
+				dependencies: [
+					{ src: 'reveal.js/lib/js/classList.js', condition: function() { return !document.body.classList; } },
+					{ src: 'reveal.js/plugin/markdown/showdown.js', condition: function() { return !!document.querySelector( '[data-markdown]' ); } },
+					{ src: 'reveal.js/plugin/markdown/markdown.js', condition: function() { return !!document.querySelector( '[data-markdown]' ); } },
+					{ src: 'reveal.js/plugin/highlight/highlight.js', async: true, callback: function() { hljs.initHighlightingOnLoad(); } },
+					{ src: 'reveal.js/plugin/zoom-js/zoom.js', async: true, condition: function() { return !!document.body.classList; } },
+					{ src: 'reveal.js/plugin/notes/notes.js', async: true, condition: function() { return !!document.body.classList; } }
+					// { src: 'reveal.js/plugin/remotes/remotes.js', async: true, condition: function() { return !!document.body.classList; } }
+				]
+			});
+		</script>
+	</body>
+</html>
