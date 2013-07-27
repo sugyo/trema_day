@@ -180,16 +180,15 @@ curl -v \
 curl -v \
         -H "Content-type: application/json" \
         -X POST \
-        -d '{ "id": 1, "datapath_id": "1", "name": "veth0-0",
-        "vid": 65535, "description": "veth0-0 on switch #1" }' \
-        http://192.168.1.254:8081/networks/123/ports
+        -d '{ "address" : "00:00:00:00:00:01" }' \
+        http://192.168.1.254:8081/networks/123/ports/1/mac_addresses
 					</code></pre>
 					ポートからMACアドレスを削除<br>
 					<pre><code class="no-highlight">
 curl -v \
         -H "Content-type: application/json" \
         -X DELETE \
-        http://192.168.1.254:8081/networks/123/ports/1
+        http://192.168.1.254:8081/networks/123/ports/1/mac_addresses/00:00:00:00:00:01
 					</code></pre>
 				</section></section>
 				<section>
